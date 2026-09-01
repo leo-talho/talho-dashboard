@@ -1,0 +1,62 @@
+═══════════════════════════════════════════════════════════════
+TALHO CARNES KPI DASHBOARD - VERCEL SETUP
+═══════════════════════════════════════════════════════════════
+
+📋 FILES INCLUDED:
+✓ pages/index.js          - Main dashboard (edit this monthly for data)
+✓ package.json            - Dependencies
+✓ next.config.js          - Next.js config
+✓ vercel.json             - Vercel config
+✓ .gitignore              - Git ignore rules
+✓ README.md               - Full documentation
+✓ SETUP_GUIDE.md          - Portuguese quick-start (15 min)
+
+═══════════════════════════════════════════════════════════════
+
+🚀 QUICK START (15 minutes):
+
+1. READ: SETUP_GUIDE.md (Portuguese, step-by-step)
+   - Follow all 8 steps in order
+   - Should take ~15 minutes total
+
+2. OR READ: README.md (if you want full details)
+   - Technical documentation
+   - Troubleshooting guide
+   - Monthly update instructions
+
+═══════════════════════════════════════════════════════════════
+
+⚡ SUMMARY OF WHAT YOU'LL DO:
+
+Step 1: Get files (already have them)
+Step 2: Create GitHub account (free) - 5 min
+Step 3: Create GitHub repository - 3 min
+Step 4: Upload files to GitHub - 3 min
+Step 5: Connect Vercel & Deploy - 4 min
+Step 6: Test login
+Step 7: Change passwords (IMPORTANT!)
+Step 8: Know how to update data monthly
+
+═══════════════════════════════════════════════════════════════
+
+💡 KEY POINTS:
+
+✓ Free hosting (Vercel)
+✓ Password protected (3 users)
+✓ Update data monthly (copy-paste 5 min)
+✓ Auto-deploy after each update
+✓ Lives at: talho-dashboard.vercel.app
+
+═══════════════════════════════════════════════════════════════
+
+❓ QUESTIONS:
+
+For English: README.md
+For Português: SETUP_GUIDE.md
+
+═══════════════════════════════════════════════════════════════
+
+Start with: SETUP_GUIDE.md if you speak Portuguese
+or: README.md if you need English/technical details
+
+Ready? Open SETUP_GUIDE.md now!
