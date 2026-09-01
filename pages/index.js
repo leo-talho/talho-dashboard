@@ -213,10 +213,10 @@ export default function Dashboard() {
           </div>
 
           <MetricCard label="Pedidos" current={data.orders.value} previous={data.orders.prev} isInteger={true} />
-          <MetricCard label="Ticket Médio" current={data.ticketAvg.value} previous={data.ticketAvg.prev} />
-          <MetricCard label="Pedidos/Dia" current={data.ordersPerDay.value} previous={data.ordersPerDay.prev} />
-          <MetricCard label="Venda em kg" current={data.salesKg.value} previous={data.salesKg.prev} />
-          <MetricCard label="Média kg/pedido" current={data.avgKgPerOrder.value} previous={data.avgKgPerOrder.prev} />
+          <MetricCard label="Ticket Médio" current={data.ticketAvg.value} previous={data.ticketAvg.prev} unit="currency" />
+          <MetricCard label="Pedidos/Dia" current={data.ordersPerDay.value} previous={data.ordersPerDay.prev} unit="number" />
+          <MetricCard label="Venda em kg" current={data.salesKg.value} previous={data.salesKg.prev} unit="kg" />
+          <MetricCard label="Média kg/pedido" current={data.avgKgPerOrder.value} previous={data.avgKgPerOrder.prev} unit="number" />
 
           <div style={{ gridColumn: '1 / -1', borderBottom: '1px solid #e1e0d9', paddingTop: '1rem', paddingBottom: '1rem', marginTop: '0.5rem' }}>
             <h2 style={{ fontSize: '14px', fontWeight: '500', color: '#0b0b0b', margin: 0 }}>▌ CAIXA</h2>
