@@ -7,7 +7,9 @@ export default function Dashboard() {
   const [user, setUser] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [comparisonMode, setComparisonMode] = useState('YTD');
+  const [comparisonMode, setComparisonMode] = useState('current');
+  const [selectedMonth, setSelectedMonth] = useState('07'); // Jul
+  const [selectedYear, setSelectedYear] = useState('2026');
 
   const validUsers = {
     'leo@talho.com.br': 'talho2026',
@@ -15,93 +17,92 @@ export default function Dashboard() {
     'sergio@talho.com.br': 'talho2026',
   };
 
-  const kpiData = {
-    YTD: {
-      current: { value: 6717703.99, prev: 5805210.83 },
-      ecommerce: { value: 592709.82, prev: 356978.97 },
-      ecomPercent: { value: 0.088231, prev: 0.061493 },
-      fdsSales: { value: 3958186.28, prev: 3486463.55 },
-      fdsPercent: { value: 0.589217, prev: 0.600575 },
-      dailySales: { value: 2759517.71, prev: 2318747.28 },
-      dailyPercent: { value: 0.410783, prev: 0.399425 },
-      orders: { value: 19392, prev: 16622 },
-      ticketAvg: { value: 2422.70, prev: 2453.64 },
-      ordersPerDay: { value: 643.59, prev: 552.27 },
-      salesKg: { value: 52818.07, prev: 47388.95 },
-      avgKgPerOrder: { value: 19.06, prev: 20.05 },
-      cashInflow: { value: 6828941.24, prev: 5879982.07 },
-      cashOutflow: { value: 7086436.99, prev: 5979764.60 },
-      cashBalance: { value: -257495.75, prev: -99782.53 },
-      payableAccounts: { value: 5412597.70, prev: 4364920.82 },
-      receivableAccounts: { value: 557643.93, prev: 666266.10 },
-      bankBalance: { value: 768100.32, prev: 1986545.06 },
-      stockMeat: { value: 2303292.33, prev: 2057582.40 },
-      stockOther: { value: 1048662.60, prev: 820470.22 },
+  // Generate all months from 2022 to 2028
+  const generateMonthRange = () => {
+    const months = [];
+    for (let year = 2022; year <= 2028; year++) {
+      for (let month = 1; month <= 12; month++) {
+        months.push({
+          key: `${year}-${String(month).padStart(2, '0')}`,
+          year,
+          month: String(month).padStart(2, '0'),
+          label: `${String(month).padStart(2, '0')}/${year}`,
+        });
+      }
+    }
+    return months;
+  };
+
+  const allMonths = generateMonthRange();
+  const years = Array.from({ length: 7 }, (_, i) => 2022 + i); // 2022-2028
+
+  // Data structure: monthlyData['2026-07'] = { current: {...}, previous: {...}, previousYear: {...}, ytd: {...}, ytdPreviousYear: {...} }
+  const monthlyData = {
+    '2026-07': {
+      current: {
+        value: 988126.63, ecommerce: 105240.00, ecomPercent: 0.1065, fdsSales: 575000.00, fdsPercent: 0.582,
+        dailySales: 413126.00, dailyPercent: 0.418, orders: 2923, ticketAvg: 338.05, ordersPerDay: 94.29,
+        salesKg: 7720.65, avgKgPerOrder: 2.64, cashInflow: 913888.39, cashOutflow: 913888.39, cashBalance: 0.00,
+        payableAccounts: 818313.27, receivableAccounts: 72477.85, bankBalance: 768100.32, stockMeat: 2303292.33, stockOther: 1048662.60,
+      },
+      previous: {
+        value: 1087621.94, ecommerce: 98500.00, ecomPercent: 0.0904, fdsSales: 650000.00, fdsPercent: 0.597,
+        dailySales: 437621.94, dailyPercent: 0.403, orders: 3097, ticketAvg: 351.19, ordersPerDay: 103.23,
+        salesKg: 8409.14, avgKgPerOrder: 2.72, cashInflow: 1103370.12, cashOutflow: 1103370.12, cashBalance: 0.00,
+        payableAccounts: 813977.97, receivableAccounts: 49773.37, bankBalance: 850000.00, stockMeat: 2200000.00, stockOther: 1000000.00,
+      },
+      previousYear: {
+        value: 798048.91, ecommerce: 45000.00, ecomPercent: 0.0564, fdsSales: 480000.00, fdsPercent: 0.601,
+        dailySales: 318048.91, dailyPercent: 0.399, orders: 2400, ticketAvg: 332.53, ordersPerDay: 77.42,
+        salesKg: 6800.00, avgKgPerOrder: 2.83, cashInflow: 790000.00, cashOutflow: 800000.00, cashBalance: -10000.00,
+        payableAccounts: 700000.00, receivableAccounts: 80000.00, bankBalance: 650000.00, stockMeat: 2100000.00, stockOther: 900000.00,
+      },
+      ytd: {
+        value: 6717703.99, ecommerce: 592709.82, ecomPercent: 0.088231, fdsSales: 3958186.28, fdsPercent: 0.589217,
+        dailySales: 2759517.71, dailyPercent: 0.410783, orders: 19392, ticketAvg: 2422.70, ordersPerDay: 643.59,
+        salesKg: 52818.07, avgKgPerOrder: 19.06, cashInflow: 6828941.24, cashOutflow: 7086436.99, cashBalance: -257495.75,
+        payableAccounts: 5412597.70, receivableAccounts: 557643.93, bankBalance: 768100.32, stockMeat: 2303292.33, stockOther: 1048662.60,
+      },
+      ytdPreviousYear: {
+        value: 5805210.83, ecommerce: 356978.97, ecomPercent: 0.061493, fdsSales: 3486463.55, fdsPercent: 0.600575,
+        dailySales: 2318747.28, dailyPercent: 0.399425, orders: 16622, ticketAvg: 2453.64, ordersPerDay: 552.27,
+        salesKg: 47388.95, avgKgPerOrder: 20.05, cashInflow: 5879982.07, cashOutflow: 5979764.60, cashBalance: -99782.53,
+        payableAccounts: 4364920.82, receivableAccounts: 666266.10, bankBalance: 1986545.06, stockMeat: 2057582.40, stockOther: 820470.22,
+      },
     },
-    MoM: {
-      current: { value: 988126.63, prev: 1087621.94 },
-      ecommerce: { value: 105240.00, prev: 98500.00 },
-      ecomPercent: { value: 0.1065, prev: 0.0904 },
-      fdsSales: { value: 575000.00, prev: 650000.00 },
-      fdsPercent: { value: 0.582, prev: 0.597 },
-      dailySales: { value: 413126.00, prev: 437621.94 },
-      dailyPercent: { value: 0.418, prev: 0.403 },
-      orders: { value: 2923, prev: 3097 },
-      ticketAvg: { value: 338.05, prev: 351.19 },
-      ordersPerDay: { value: 94.29, prev: 103.23 },
-      salesKg: { value: 7720.65, prev: 8409.14 },
-      avgKgPerOrder: { value: 2.64, prev: 2.72 },
-      cashInflow: { value: 913888.39, prev: 1103370.12 },
-      cashOutflow: { value: 913888.39, prev: 1103370.12 },
-      cashBalance: { value: 0.00, prev: 0.00 },
-      payableAccounts: { value: 818313.27, prev: 813977.97 },
-      receivableAccounts: { value: 72477.85, prev: 49773.37 },
-      bankBalance: { value: 768100.32, prev: 850000.00 },
-      stockMeat: { value: 2303292.33, prev: 2200000.00 },
-      stockOther: { value: 1048662.60, prev: 1000000.00 },
+    '2026-06': {
+      current: {
+        value: 1087621.94, ecommerce: 98500.00, ecomPercent: 0.0904, fdsSales: 650000.00, fdsPercent: 0.597,
+        dailySales: 437621.94, dailyPercent: 0.403, orders: 3097, ticketAvg: 351.19, ordersPerDay: 103.23,
+        salesKg: 8409.14, avgKgPerOrder: 2.72, cashInflow: 1103370.12, cashOutflow: 1103370.12, cashBalance: 0.00,
+        payableAccounts: 813977.97, receivableAccounts: 49773.37, bankBalance: 850000.00, stockMeat: 2200000.00, stockOther: 1000000.00,
+      },
+      previous: {
+        value: 1012277.69, ecommerce: 95000.00, ecomPercent: 0.0938, fdsSales: 600000.00, fdsPercent: 0.593,
+        dailySales: 412277.69, dailyPercent: 0.407, orders: 2864, ticketAvg: 353.45, ordersPerDay: 95.47,
+        salesKg: 7865.65, avgKgPerOrder: 2.75, cashInflow: 1050000.00, cashOutflow: 1050000.00, cashBalance: 0.00,
+        payableAccounts: 800000.00, receivableAccounts: 60000.00, bankBalance: 800000.00, stockMeat: 2150000.00, stockOther: 950000.00,
+      },
+      previousYear: {
+        value: 900000.00, ecommerce: 50000.00, ecomPercent: 0.0556, fdsSales: 500000.00, fdsPercent: 0.556,
+        dailySales: 400000.00, dailyPercent: 0.444, orders: 2500, ticketAvg: 360.00, ordersPerDay: 83.33,
+        salesKg: 7000.00, avgKgPerOrder: 2.80, cashInflow: 850000.00, cashOutflow: 850000.00, cashBalance: 0.00,
+        payableAccounts: 750000.00, receivableAccounts: 70000.00, bankBalance: 700000.00, stockMeat: 2050000.00, stockOther: 900000.00,
+      },
     },
-    YoY: {
-      current: { value: 988126.63, prev: 798048.91 },
-      ecommerce: { value: 105240.00, prev: 45000.00 },
-      ecomPercent: { value: 0.1065, prev: 0.0564 },
-      fdsSales: { value: 575000.00, prev: 480000.00 },
-      fdsPercent: { value: 0.582, prev: 0.601 },
-      dailySales: { value: 413126.00, prev: 318048.91 },
-      dailyPercent: { value: 0.418, prev: 0.399 },
-      orders: { value: 2923, prev: 2400 },
-      ticketAvg: { value: 338.05, prev: 332.53 },
-      ordersPerDay: { value: 94.29, prev: 77.42 },
-      salesKg: { value: 7720.65, prev: 6800.00 },
-      avgKgPerOrder: { value: 2.64, prev: 2.83 },
-      cashInflow: { value: 913888.39, prev: 790000.00 },
-      cashOutflow: { value: 913888.39, prev: 800000.00 },
-      cashBalance: { value: 0.00, prev: -10000.00 },
-      payableAccounts: { value: 818313.27, prev: 700000.00 },
-      receivableAccounts: { value: 72477.85, prev: 80000.00 },
-      bankBalance: { value: 768100.32, prev: 650000.00 },
-      stockMeat: { value: 2303292.33, prev: 2100000.00 },
-      stockOther: { value: 1048662.60, prev: 900000.00 },
-    },
+    // Add more months here as data becomes available: '2026-08': {...}, '2026-09': {...}, etc.
   };
 
   const caixaData = {
-    'Jul/26': {
-      boleto: 45793.72,
-      creditCard: 579178.62,
-      debitCard: 60954.84,
-      creditInCC: 180000.00,
-      danfe: 48000.00,
-      cash: 5000.00,
+    '2026-07': {
+      boleto: 45793.72, creditCard: 579178.62, debitCard: 60954.84, creditInCC: 180000.00, danfe: 48000.00, cash: 5000.00,
     },
-    'Jun/26': {
-      boleto: 65782.09,
-      creditCard: 711070.16,
-      debitCard: 84574.99,
-      creditInCC: 189000.00,
-      danfe: 53000.00,
-      cash: 6000.00,
+    '2026-06': {
+      boleto: 65782.09, creditCard: 711070.16, debitCard: 84574.99, creditInCC: 189000.00, danfe: 53000.00, cash: 6000.00,
     },
   };
+
+  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -124,18 +125,34 @@ export default function Dashboard() {
     return ((current - prev) / prev) * 100;
   };
 
+  const getSelectedData = () => {
+    const key = `${selectedYear}-${selectedMonth}`;
+    const monthData = monthlyData[key];
+    
+    if (!monthData) return null;
+    
+    if (comparisonMode === 'current') {
+      return { current: monthData.current, previous: monthData.previous, label: 'MoM' };
+    } else if (comparisonMode === 'yoy') {
+      return { current: monthData.current, previous: monthData.previousYear, label: 'YoY' };
+    } else if (comparisonMode === 'ytd') {
+      return { current: monthData.ytd, previous: monthData.ytdPreviousYear, label: 'YTD' };
+    }
+  };
+
   const downloadCSV = () => {
-    const data = kpiData[comparisonMode];
+    const data = getSelectedData();
+    if (!data) return;
+    
     let csv = 'TALHO CARNES - Relatório de KPIs\n';
-    csv += `Período: ${comparisonMode}\n`;
+    csv += `Período: ${selectedMonth}/${selectedYear}\n`;
     csv += `Atualizado: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}\n\n`;
     csv += 'RECEITA,Valor Atual,Valor Anterior,Variação %\n';
-    csv += `Venda Bruta,${data.current.value},${data.current.prev},${calculateVariation(data.current.value, data.current.prev).toFixed(2)}\n`;
-    csv += `Ecommerce,${data.ecommerce.value},${data.ecommerce.prev},${calculateVariation(data.ecommerce.value, data.ecommerce.prev).toFixed(2)}\n`;
+    csv += `Venda Bruta,${data.current.value},${data.previous.value},${calculateVariation(data.current.value, data.previous.value).toFixed(2)}\n`;
 
     const element = document.createElement('a');
     element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv));
-    element.setAttribute('download', `talho-kpi-${comparisonMode}-${Date.now()}.csv`);
+    element.setAttribute('download', `talho-kpi-${selectedMonth}-${selectedYear}-${Date.now()}.csv`);
     element.style.display = 'none';
     document.body.appendChild(element);
     element.click();
@@ -162,16 +179,13 @@ export default function Dashboard() {
               {loginError && <div style={{ fontSize: '13px', color: '#d03b3b', padding: '0.75rem', background: '#fcebeb', borderRadius: '6px' }}>{loginError}</div>}
               <button type="submit" style={{ background: '#533ab7', color: '#ffffff', border: 'none', padding: '0.75rem 1rem', borderRadius: '6px', fontSize: '14px', fontWeight: '500', cursor: 'pointer', marginTop: '1rem' }}>Entrar</button>
             </form>
-            <div style={{ fontSize: '12px', color: '#898781', marginTop: '1.5rem', textAlign: 'center' }}>
-              Usuários de teste:<br />leo@talho.com.br<br />mauricio@talho.com.br<br />sergio@talho.com.br
-            </div>
           </div>
         </div>
       </div>
     );
   }
 
-  const data = kpiData[comparisonMode];
+  const data = getSelectedData();
 
   return (
     <div style={{ minHeight: '100vh', background: '#fcfcfb', fontFamily: 'system-ui, -apple-system, sans-serif', padding: '1.5rem' }}>
@@ -179,91 +193,99 @@ export default function Dashboard() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', borderBottom: '1px solid #e1e0d9', paddingBottom: '1rem' }}>
           <div>
             <h1 style={{ fontSize: '24px', fontWeight: '600', color: '#0b0b0b', margin: '0 0 0.5rem 0' }}>Talho Carnes | Painel Financeiro</h1>
-            <p style={{ fontSize: '13px', color: '#52514e', margin: 0 }}>Última atualização: 01/09/2026 às 17:32 | Dados de Jul/26</p>
+            <p style={{ fontSize: '13px', color: '#52514e', margin: 0 }}>Dados de {selectedMonth}/{selectedYear}</p>
           </div>
           <button onClick={handleLogout} style={{ padding: '0.5rem 1rem', border: '1px solid #b4b2a9', background: 'transparent', borderRadius: '6px', fontSize: '13px', cursor: 'pointer', color: '#52514e' }}>Sair</button>
         </div>
 
+        {/* Month/Year Selector */}
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <label style={{ fontSize: '13px', color: '#52514e', fontWeight: '500' }}>Mês:</label>
+            <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} style={{ padding: '0.5rem', border: '1px solid #e1e0d9', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}>
+              {Array.from({ length: 12 }, (_, i) => {
+                const month = String(i + 1).padStart(2, '0');
+                return <option key={month} value={month}>{month} - {monthNames[i]}</option>;
+              })}
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <label style={{ fontSize: '13px', color: '#52514e', fontWeight: '500' }}>Ano:</label>
+            <select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} style={{ padding: '0.5rem', border: '1px solid #e1e0d9', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}>
+              {years.map((year) => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          </div>
+
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            {['YTD', 'MoM', 'YoY'].map((mode) => (
-              <button key={mode} onClick={() => setComparisonMode(mode)} style={{ padding: '0.5rem 1rem', background: comparisonMode === mode ? '#533ab7' : 'transparent', color: comparisonMode === mode ? '#ffffff' : '#52514e', border: comparisonMode === mode ? 'none' : '1px solid #e1e0d9', borderRadius: '6px', fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}>
-                {mode}
-              </button>
-            ))}
+            <button onClick={() => setComparisonMode('current')} style={{ padding: '0.5rem 1rem', background: comparisonMode === 'current' ? '#533ab7' : 'transparent', color: comparisonMode === 'current' ? '#ffffff' : '#52514e', border: comparisonMode === 'current' ? 'none' : '1px solid #e1e0d9', borderRadius: '6px', fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}>
+              MoM
+            </button>
+            <button onClick={() => setComparisonMode('yoy')} style={{ padding: '0.5rem 1rem', background: comparisonMode === 'yoy' ? '#533ab7' : 'transparent', color: comparisonMode === 'yoy' ? '#ffffff' : '#52514e', border: comparisonMode === 'yoy' ? 'none' : '1px solid #e1e0d9', borderRadius: '6px', fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}>
+              YoY
+            </button>
+            <button onClick={() => setComparisonMode('ytd')} style={{ padding: '0.5rem 1rem', background: comparisonMode === 'ytd' ? '#533ab7' : 'transparent', color: comparisonMode === 'ytd' ? '#ffffff' : '#52514e', border: comparisonMode === 'ytd' ? 'none' : '1px solid #e1e0d9', borderRadius: '6px', fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}>
+              YTD
+            </button>
           </div>
-          <button onClick={downloadCSV} style={{ padding: '0.5rem 1rem', border: '1px solid #b4b2a9', background: 'transparent', borderRadius: '6px', fontSize: '13px', cursor: 'pointer', color: '#52514e' }}>↓ Exportar CSV</button>
+
+          {data && <button onClick={downloadCSV} style={{ padding: '0.5rem 1rem', border: '1px solid #b4b2a9', background: 'transparent', borderRadius: '6px', fontSize: '13px', cursor: 'pointer', color: '#52514e', marginLeft: 'auto' }}>↓ Exportar CSV</button>}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', marginBottom: '2rem' }}>
-          <div style={{ gridColumn: '1 / -1', borderBottom: '1px solid #e1e0d9', paddingBottom: '1rem', marginBottom: '0.5rem' }}>
-            <h2 style={{ fontSize: '14px', fontWeight: '500', color: '#0b0b0b', margin: 0 }}>▌ RECEITA</h2>
+        {/* Data Not Available Message */}
+        {!data && (
+          <div style={{ background: '#fef3e2', border: '1px solid #f0c959', borderRadius: '6px', padding: '1.5rem', marginBottom: '2rem', textAlign: 'center' }}>
+            <p style={{ fontSize: '14px', color: '#8b6f47', margin: 0 }}>📊 Dados não disponíveis para {monthNames[parseInt(selectedMonth) - 1]}/{selectedYear}</p>
+            <p style={{ fontSize: '12px', color: '#a88a52', margin: '0.5rem 0 0 0' }}>Selecione outro período ou aguarde a atualização dos dados.</p>
           </div>
+        )}
 
-          <MetricCard label="Venda Bruta" current={data.current.value} previous={data.current.prev} />
-          <MetricCard label="Ecommerce" current={data.ecommerce.value} previous={data.ecommerce.prev} />
-          <MetricCard label="% Ecom/Venda" current={data.ecomPercent.value} previous={data.ecomPercent.prev} isPercent={true} />
-          <MetricCard label="Venda FDS" current={data.fdsSales.value} previous={data.fdsSales.prev} />
-          <MetricCard label="% FDS/Venda" current={data.fdsPercent.value} previous={data.fdsPercent.prev} isPercent={true} />
-          <MetricCard label="Venda Dia a Dia" current={data.dailySales.value} previous={data.dailySales.prev} />
-          <MetricCard label="% Dia a Dia" current={data.dailyPercent.value} previous={data.dailyPercent.prev} isPercent={true} />
+        {/* KPI Grid */}
+        {data && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', marginBottom: '2rem' }}>
+            <div style={{ gridColumn: '1 / -1', borderBottom: '1px solid #e1e0d9', paddingBottom: '1rem', marginBottom: '0.5rem' }}>
+              <h2 style={{ fontSize: '14px', fontWeight: '500', color: '#0b0b0b', margin: 0 }}>▌ RECEITA</h2>
+            </div>
 
-          <div style={{ gridColumn: '1 / -1', borderBottom: '1px solid #e1e0d9', paddingTop: '1rem', paddingBottom: '1rem', marginTop: '0.5rem' }}>
-            <h2 style={{ fontSize: '14px', fontWeight: '500', color: '#0b0b0b', margin: 0 }}>▌ OPERACIONAL</h2>
+            <MetricCard label="Venda Bruta" current={data.current.value} previous={data.previous.value} />
+            <MetricCard label="Ecommerce" current={data.current.ecommerce} previous={data.previous.ecommerce} />
+            <MetricCard label="% Ecom/Venda" current={data.current.ecomPercent} previous={data.previous.ecomPercent} isPercent={true} />
+            <MetricCard label="Venda FDS" current={data.current.fdsSales} previous={data.previous.fdsSales} />
+            <MetricCard label="% FDS/Venda" current={data.current.fdsPercent} previous={data.previous.fdsPercent} isPercent={true} />
+            <MetricCard label="Venda Dia a Dia" current={data.current.dailySales} previous={data.previous.dailySales} />
+            <MetricCard label="% Dia a Dia" current={data.current.dailyPercent} previous={data.previous.dailyPercent} isPercent={true} />
+
+            <div style={{ gridColumn: '1 / -1', borderBottom: '1px solid #e1e0d9', paddingTop: '1rem', paddingBottom: '1rem', marginTop: '0.5rem' }}>
+              <h2 style={{ fontSize: '14px', fontWeight: '500', color: '#0b0b0b', margin: 0 }}>▌ OPERACIONAL</h2>
+            </div>
+
+            <MetricCard label="Pedidos" current={data.current.orders} previous={data.previous.orders} isInteger={true} />
+            <MetricCard label="Ticket Médio" current={data.current.ticketAvg} previous={data.previous.ticketAvg} unit="currency" />
+            <MetricCard label="Pedidos/Dia" current={data.current.ordersPerDay} previous={data.previous.ordersPerDay} unit="number" />
+            <MetricCard label="Venda em kg" current={data.current.salesKg} previous={data.previous.salesKg} unit="kg" />
+            <MetricCard label="Média kg/pedido" current={data.current.avgKgPerOrder} previous={data.previous.avgKgPerOrder} unit="number" />
+
+            <div style={{ gridColumn: '1 / -1', borderBottom: '1px solid #e1e0d9', paddingTop: '1rem', paddingBottom: '1rem', marginTop: '0.5rem' }}>
+              <h2 style={{ fontSize: '14px', fontWeight: '500', color: '#0b0b0b', margin: 0 }}>▌ CAIXA</h2>
+            </div>
+
+            <MetricCard label="Entrada de Caixa" current={data.current.cashInflow} previous={data.previous.cashInflow} />
+            <MetricCard label="Saída de Caixa" current={data.current.cashOutflow} previous={data.previous.cashOutflow} />
+            <MetricCard label="Saldo Caixa" current={data.current.cashBalance} previous={data.previous.cashBalance} />
+
+            <div style={{ gridColumn: '1 / -1', borderBottom: '1px solid #e1e0d9', paddingTop: '1rem', paddingBottom: '1rem', marginTop: '0.5rem' }}>
+              <h2 style={{ fontSize: '14px', fontWeight: '500', color: '#0b0b0b', margin: 0 }}>▌ BALANÇO</h2>
+            </div>
+
+            <MetricCard label="Contas a Pagar" current={data.current.payableAccounts} previous={data.previous.payableAccounts} />
+            <MetricCard label="Contas a Receber" current={data.current.receivableAccounts} previous={data.previous.receivableAccounts} />
+            <MetricCard label="Banco + Cofre" current={data.current.bankBalance} previous={data.previous.bankBalance} />
+            <MetricCard label="Estoque Carnes" current={data.current.stockMeat} previous={data.previous.stockMeat} />
+            <MetricCard label="Estoque Outros" current={data.current.stockOther} previous={data.previous.stockOther} />
           </div>
-
-          <MetricCard label="Pedidos" current={data.orders.value} previous={data.orders.prev} isInteger={true} />
-          <MetricCard label="Ticket Médio" current={data.ticketAvg.value} previous={data.ticketAvg.prev} unit="currency" />
-          <MetricCard label="Pedidos/Dia" current={data.ordersPerDay.value} previous={data.ordersPerDay.prev} unit="number" />
-          <MetricCard label="Venda em kg" current={data.salesKg.value} previous={data.salesKg.prev} unit="kg" />
-          <MetricCard label="Média kg/pedido" current={data.avgKgPerOrder.value} previous={data.avgKgPerOrder.prev} unit="number" />
-
-          <div style={{ gridColumn: '1 / -1', borderBottom: '1px solid #e1e0d9', paddingTop: '1rem', paddingBottom: '1rem', marginTop: '0.5rem' }}>
-            <h2 style={{ fontSize: '14px', fontWeight: '500', color: '#0b0b0b', margin: 0 }}>▌ CAIXA</h2>
-          </div>
-
-          <MetricCard label="Entrada de Caixa" current={data.cashInflow.value} previous={data.cashInflow.prev} />
-          <MetricCard label="Saída de Caixa" current={data.cashOutflow.value} previous={data.cashOutflow.prev} />
-          <MetricCard label="Saldo Caixa" current={data.cashBalance.value} previous={data.cashBalance.prev} />
-
-          <div style={{ gridColumn: '1 / -1', borderBottom: '1px solid #e1e0d9', paddingTop: '1rem', paddingBottom: '1rem', marginTop: '0.5rem' }}>
-            <h2 style={{ fontSize: '14px', fontWeight: '500', color: '#0b0b0b', margin: 0 }}>▌ BALANÇO</h2>
-          </div>
-
-          <MetricCard label="Contas a Pagar" current={data.payableAccounts.value} previous={data.payableAccounts.prev} />
-          <MetricCard label="Contas a Receber" current={data.receivableAccounts.value} previous={data.receivableAccounts.prev} />
-          <MetricCard label="Banco + Cofre" current={data.bankBalance.value} previous={data.bankBalance.prev} />
-          <MetricCard label="Estoque Carnes" current={data.stockMeat.value} previous={data.stockMeat.prev} />
-          <MetricCard label="Estoque Outros" current={data.stockOther.value} previous={data.stockOther.prev} />
-        </div>
-
-        <div style={{ marginTop: '2rem', borderTop: '1px solid #e1e0d9', paddingTop: '1.5rem' }}>
-          <h2 style={{ fontSize: '14px', fontWeight: '500', color: '#0b0b0b', marginBottom: '1rem' }}>Composição do Caixa - Jul/26</h2>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', fontSize: '13px', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid #e1e0d9' }}>
-                  <th style={{ textAlign: 'left', padding: '0.75rem', color: '#52514e', fontWeight: '400' }}>Método de Pagamento</th>
-                  <th style={{ textAlign: 'right', padding: '0.75rem', color: '#52514e', fontWeight: '400' }}>Jul/26</th>
-                  <th style={{ textAlign: 'right', padding: '0.75rem', color: '#52514e', fontWeight: '400' }}>Jun/26</th>
-                  <th style={{ textAlign: 'right', padding: '0.75rem', color: '#52514e', fontWeight: '400' }}>Var %</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[{ label: 'Boleto', key: 'boleto' }, { label: 'Cartão Crédito', key: 'creditCard' }, { label: 'Cartão Débito', key: 'debitCard' }, { label: 'Crédito em CC', key: 'creditInCC' }, { label: 'DANFE', key: 'danfe' }, { label: 'Dinheiro', key: 'cash' }].map((method, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid #e1e0d9' }}>
-                    <td style={{ padding: '0.75rem', color: '#0b0b0b' }}>{method.label}</td>
-                    <td style={{ textAlign: 'right', padding: '0.75rem', color: '#0b0b0b' }}>R$ {caixaData['Jul/26'][method.key].toLocaleString('pt-BR')}</td>
-                    <td style={{ textAlign: 'right', padding: '0.75rem', color: '#0b0b0b' }}>R$ {caixaData['Jun/26'][method.key].toLocaleString('pt-BR')}</td>
-                    <td style={{ textAlign: 'right', padding: '0.75rem', color: calculateVariation(caixaData['Jul/26'][method.key], caixaData['Jun/26'][method.key]) >= 0 ? '#008300' : '#d03b3b' }}>
-                      {calculateVariation(caixaData['Jul/26'][method.key], caixaData['Jun/26'][method.key]).toFixed(2)}%
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
