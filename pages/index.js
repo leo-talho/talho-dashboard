@@ -269,7 +269,7 @@ export default function Dashboard() {
   );
 }
 
-function MetricCard({ label, current, previous, isPercent, isInteger }) {
+function MetricCard({ label, current, previous, isPercent, isInteger, unit = 'currency' }) {
   const variation = ((current - previous) / previous) * 100;
   const isPositive = variation >= 0;
 
@@ -281,6 +281,12 @@ function MetricCard({ label, current, previous, isPercent, isInteger }) {
   } else if (isInteger) {
     displayCurrent = current.toLocaleString('pt-BR');
     displayPrevious = previous.toLocaleString('pt-BR');
+  } else if (unit === 'kg') {
+    displayCurrent = (current / 1000).toFixed(1) + ' kg';
+    displayPrevious = (previous / 1000).toFixed(1) + ' kg';
+  } else if (unit === 'number') {
+    displayCurrent = current.toFixed(2);
+    displayPrevious = previous.toFixed(2);
   } else {
     displayCurrent = 'R$ ' + (current / 1000).toFixed(0) + 'k';
     displayPrevious = 'R$ ' + (previous / 1000).toFixed(0) + 'k';
