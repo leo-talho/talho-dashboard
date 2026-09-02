@@ -27,6 +27,9 @@ export default async function handler(req, res) {
 
     const workbook = XLSX.read(response.data, { type: 'array' });
     const dadosSheet = XLSX.utils.sheet_to_json(workbook.Sheets["Dados"]);
+    const dadosSheet = XLSX.utils.sheet_to_json(workbook.Sheets["Dados"]);
+console.log('Total rows read:', dadosSheet.length);
+console.log('First 5 rows:', dadosSheet.slice(0, 5));
 
     const monthlyData = formatKPIData(dadosSheet);
 
