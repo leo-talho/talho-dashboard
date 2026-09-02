@@ -1,74 +1,142 @@
-'use client';
+// pages/index.js
+import { useState, useEffect } from 'react';
 
-import { useState } from 'react';
+const VALID_USERS = {
+  'leo@talho.com.br': 'talho2026',
+  'mauricio@talho.com.br': 'talho2026',
+  'sergio@talho.com.br': 'talho2026',
+};
+
+const MONTH_NAMES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+const YEARS = Array.from({ length: 7 }, (_, i) => String(2022 + i)); // 2022–2028
+
+// One list drives both the cards and the CSV export
+const SECTIONS = [
+  {
+    title: 'RECEITA',
+    metrics: [
+      { key: 'value', label: 'Venda Bruta', unit: 'currency' },
+      { key: 'ecommerce', label: 'Ecommerce', unit: 'currency' },
+      { key: 'ecomPercent', label: '% Ecom/Venda', unit: 'percent' },
+      { key: 'fdsSales', label: 'Venda FDS', unit: 'currency' },
+      { key: 'fdsPercent', label: '% FDS/Venda', unit: 'percent' },
+      { key: 'dailySales', label: 'Venda Dia a Dia', unit: 'currency' },
+      { key: 'dailyPercent', label: '% Dia a Dia/Venda', unit: 'percent' },
+    ],
+  },
+  {
+    title: 'OPERACIONAL',
+    metrics: [
+      { key: 'orders', label: 'Pedidos', unit: 'integer' },
+      { key: 'ticketAvg', label: 'Ticket Médio', unit: 'currencyFull' },
+      { key: 'ordersPerDay', label: 'Pedidos/Dia', unit: 'number' },
+      { key: 'salesKg', label: 'Venda em kg', unit: 'kg' },
+      { key: 'avgKgPerOrder', label: 'Média kg/pedido', unit: 'number' },
+    ],
+  },
+  {
+    title: 'CAIXA',
+    metrics: [
+      { key: 'cashInflow', label: 'Entrada de Caixa', unit: 'currency' },
+      { key: 'cashOutflow', label: 'Saída de Caixa', unit: 'currency' },
+      { key: 'cashBalance', label: 'Saldo Caixa', unit: 'currency' },
+    ],
+  },
+  {
+    title: 'BALANÇO',
+    metrics: [
+      { key: 'payableAccounts', label: 'Contas a Pagar', unit: 'currency' },
+      { key: 'receivableAccounts', label: 'Contas a Receber', unit: 'currency' },
+      { key: 'bankBalance', label: 'Banco + Cofre', unit: 'currency' },
+      { key: 'stockMeat', label: 'Estoque Carnes', unit: 'currency' },
+      { key: 'stockOther', label: 'Estoque Não Carnes', unit: 'currency' },
+    ],
+  },
+];
+
+const MODES = {
+  mom: { label: 'MoM', prevLabel: 'Mês ant.' },
+  yoy: { label: 'YoY', prevLabel: 'Mesmo mês ano ant.' },
+  ytd: { label: 'YTD', prevLabel: 'YTD ano ant.' },
+};
+
+function fmt(v, unit) {
+  if (v === null || v === undefined || isNaN(v)) return '—';
+  switch (unit) {
+    case 'percent':
+      return (v * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+    case 'integer':
+      return Math.round(v).toLocaleString('pt-BR');
+    case 'number':
+      return v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    case 'kg':
+      return Math.round(v).toLocaleString('pt-BR') + ' kg';
+    case 'currencyFull':
+      return 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    case 'currency':
+    default:
+      if (Math.abs(v) >= 1_000_000) return 'R$ ' + (v / 1_000_000).toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + 'M';
+      return 'R$ ' + Math.round(v / 1000).toLocaleString('pt-BR') + 'k';
+  }
+}
+
+function variationPct(current, previous) {
+  if (previous === null || previous === undefined || previous === 0 || current === null || current === undefined) return null;
+  return ((current - previous) / Math.abs(previous)) * 100;
+}
 
 export default function Dashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [comparisonMode, setComparisonMode] = useState('current');
-  const [selectedMonth, setSelectedMonth] = useState('07'); // Jul
+
+  const [mode, setMode] = useState('mom');
+  const [selectedMonth, setSelectedMonth] = useState('07');
   const [selectedYear, setSelectedYear] = useState('2026');
+
   const [monthlyData, setMonthlyData] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [meta, setMeta] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState('');
 
+  // Load data from the API once the user is logged in
   useEffect(() => {
-    fetchKPIData();
-}, []);
+    if (!isAuthenticated) return;
+    let cancelled = false;
 
-async function fetchKPIData() {
-  try {
-    const response = await fetch('/api/fetch-kpi-data');
-    const data = await response.json();
-    setMonthlyData(data);
-    setLoading(false);
-  } catch (error) {
-    console.error('Failed to load KPI data:', error);
-    setLoading(false);
-  }
-}
-  const validUsers = {
-    'leo@talho.com.br': 'talho2026',
-    'mauricio@talho.com.br': 'talho2026',
-    'sergio@talho.com.br': 'talho2026',
-  };
-
-  // Generate all months from 2022 to 2028
-  const generateMonthRange = () => {
-    const months = [];
-    for (let year = 2022; year <= 2028; year++) {
-      for (let month = 1; month <= 12; month++) {
-        months.push({
-          key: `${year}-${String(month).padStart(2, '0')}`,
-          year,
-          month: String(month).padStart(2, '0'),
-          label: `${String(month).padStart(2, '0')}/${year}`,
-        });
+    async function load() {
+      setLoading(true);
+      setFetchError('');
+      try {
+        const res = await fetch('/api/fetch-kpi-data');
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.details || json.error || `HTTP ${res.status}`);
+        if (cancelled) return;
+        const months = json.months || {};
+        setMonthlyData(months);
+        setMeta(json.meta || null);
+        // default to the most recent month that has data
+        const keys = Object.keys(months).sort();
+        if (keys.length) {
+          const [y, m] = keys[keys.length - 1].split('-');
+          setSelectedYear(y);
+          setSelectedMonth(m);
+        }
+      } catch (e) {
+        if (!cancelled) setFetchError(e.message);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     }
-    return months;
-  };
 
-  const allMonths = generateMonthRange();
-  const years = Array.from({ length: 7 }, (_, i) => 2022 + i); // 2022-2028
-
-  // Data structure: monthlyData['2026-07'] = { current: {...}, previous: {...}, previousYear: {...}, ytd: {...}, ytdPreviousYear: {...} }
-
-  const caixaData = {
-    '2026-07': {
-      boleto: 45793.72, creditCard: 579178.62, debitCard: 60954.84, creditInCC: 180000.00, danfe: 48000.00, cash: 5000.00,
-    },
-    '2026-06': {
-      boleto: 65782.09, creditCard: 711070.16, debitCard: 84574.99, creditInCC: 189000.00, danfe: 53000.00, cash: 6000.00,
-    },
-  };
-
-  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    load();
+    return () => { cancelled = true; };
+  }, [isAuthenticated]);
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (validUsers[user] && validUsers[user] === password) {
+    if (VALID_USERS[user] && VALID_USERS[user] === password) {
       setIsAuthenticated(true);
       setLoginError('');
     } else {
@@ -80,47 +148,51 @@ async function fetchKPIData() {
     setIsAuthenticated(false);
     setUser('');
     setPassword('');
+    setMonthlyData({});
+    setMeta(null);
   };
 
-  const calculateVariation = (current, prev) => {
-    if (prev === 0) return 0;
-    return ((current - prev) / prev) * 100;
-  };
+  const key = `${selectedYear}-${selectedMonth}`;
+  const entry = monthlyData[key];
 
-  const getSelectedData = () => {
-    const key = `${selectedYear}-${selectedMonth}`;
-    const monthData = monthlyData[key];
-    
-    if (!monthData) return null;
-    
-    if (comparisonMode === 'current') {
-      return { current: monthData.current, previous: monthData.previous, label: 'MoM' };
-    } else if (comparisonMode === 'yoy') {
-      return { current: monthData.current, previous: monthData.previousYear, label: 'YoY' };
-    } else if (comparisonMode === 'ytd') {
-      return { current: monthData.ytd, previous: monthData.ytdPreviousYear, label: 'YTD' };
-    }
-  };
+  let data = null;
+  if (entry) {
+    if (mode === 'mom') data = { current: entry.current, previous: entry.previous };
+    else if (mode === 'yoy') data = { current: entry.current, previous: entry.previousYear };
+    else if (entry.ytd) data = { current: entry.ytd, previous: entry.ytdPreviousYear };
+  }
+
+  const availableKeys = Object.keys(monthlyData).sort();
+  const rangeLabel = availableKeys.length
+    ? `${availableKeys[0].split('-').reverse().join('/')} – ${availableKeys[availableKeys.length - 1].split('-').reverse().join('/')}`
+    : '';
 
   const downloadCSV = () => {
-    const data = getSelectedData();
     if (!data) return;
-    
-    let csv = 'TALHO CARNES - Relatório de KPIs\n';
-    csv += `Período: ${selectedMonth}/${selectedYear}\n`;
-    csv += `Atualizado: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}\n\n`;
-    csv += 'RECEITA,Valor Atual,Valor Anterior,Variação %\n';
-    csv += `Venda Bruta,${data.current.value},${data.previous.value},${calculateVariation(data.current.value, data.previous.value).toFixed(2)}\n`;
-
-    const element = document.createElement('a');
-    element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv));
-    element.setAttribute('download', `talho-kpi-${selectedMonth}-${selectedYear}-${Date.now()}.csv`);
-    element.style.display = 'none';
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+    const lines = [
+      'TALHO CARNES - Relatório de KPIs',
+      `Período;${selectedMonth}/${selectedYear};Comparação;${MODES[mode].label}`,
+      `Gerado em;${new Date().toLocaleString('pt-BR')}`,
+      '',
+      'Seção;KPI;Valor Atual;Valor Anterior;Variação %',
+    ];
+    SECTIONS.forEach((s) => {
+      s.metrics.forEach((m) => {
+        const cur = data.current?.[m.key];
+        const prev = data.previous?.[m.key];
+        const v = variationPct(cur, prev);
+        lines.push(`${s.title};${m.label};${cur ?? ''};${prev ?? ''};${v === null ? '' : v.toFixed(2)}`);
+      });
+    });
+    const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `talho-kpi-${selectedYear}-${selectedMonth}-${mode}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
   };
 
+  // ---------- login ----------
   if (!isAuthenticated) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fcfcfb', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
@@ -128,7 +200,6 @@ async function fetchKPIData() {
           <div style={{ background: '#ffffff', border: '1px solid #e1e0d9', borderRadius: '8px', padding: '2rem' }}>
             <h1 style={{ fontSize: '24px', fontWeight: '600', color: '#0b0b0b', marginBottom: '0.5rem', textAlign: 'center' }}>Talho Carnes</h1>
             <p style={{ fontSize: '14px', color: '#52514e', marginBottom: '2rem', textAlign: 'center' }}>Dashboard financeiro</p>
-
             <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
                 <label style={{ fontSize: '13px', color: '#52514e', display: 'block', marginBottom: '0.5rem' }}>Email</label>
@@ -147,110 +218,98 @@ async function fetchKPIData() {
     );
   }
 
-  const data = getSelectedData();
+  // ---------- dashboard ----------
+  const btn = (active) => ({
+    padding: '0.5rem 1rem',
+    background: active ? '#533ab7' : 'transparent',
+    color: active ? '#ffffff' : '#52514e',
+    border: active ? '1px solid #533ab7' : '1px solid #e1e0d9',
+    borderRadius: '6px',
+    fontSize: '13px',
+    fontWeight: '500',
+    cursor: 'pointer',
+  });
+  const select = { padding: '0.5rem', border: '1px solid #e1e0d9', borderRadius: '6px', fontSize: '13px', cursor: 'pointer', background: '#fff' };
+
+  const updatedAt = meta?.modifiedTime ? new Date(meta.modifiedTime).toLocaleString('pt-BR') : null;
 
   return (
     <div style={{ minHeight: '100vh', background: '#fcfcfb', fontFamily: 'system-ui, -apple-system, sans-serif', padding: '1.5rem' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', borderBottom: '1px solid #e1e0d9', paddingBottom: '1rem' }}>
           <div>
             <h1 style={{ fontSize: '24px', fontWeight: '600', color: '#0b0b0b', margin: '0 0 0.5rem 0' }}>Talho Carnes | Painel Financeiro</h1>
-            <p style={{ fontSize: '13px', color: '#52514e', margin: 0 }}>Dados de {selectedMonth}/{selectedYear}</p>
+            <p style={{ fontSize: '13px', color: '#52514e', margin: 0 }}>
+              {updatedAt ? `Analytics.xlsx atualizado em ${updatedAt}` : 'Fonte: Analytics.xlsx (Google Drive)'}
+              {rangeLabel ? ` | Dados disponíveis: ${rangeLabel}` : ''}
+            </p>
           </div>
           <button onClick={handleLogout} style={{ padding: '0.5rem 1rem', border: '1px solid #b4b2a9', background: 'transparent', borderRadius: '6px', fontSize: '13px', cursor: 'pointer', color: '#52514e' }}>Sair</button>
         </div>
 
-        {/* Month/Year Selector */}
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             <label style={{ fontSize: '13px', color: '#52514e', fontWeight: '500' }}>Mês:</label>
-            <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} style={{ padding: '0.5rem', border: '1px solid #e1e0d9', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}>
-              {Array.from({ length: 12 }, (_, i) => {
-                const month = String(i + 1).padStart(2, '0');
-                return <option key={month} value={month}>{month} - {monthNames[i]}</option>;
+            <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} style={select}>
+              {MONTH_NAMES.map((name, i) => {
+                const m = String(i + 1).padStart(2, '0');
+                return <option key={m} value={m}>{m} - {name}</option>;
               })}
             </select>
           </div>
-
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             <label style={{ fontSize: '13px', color: '#52514e', fontWeight: '500' }}>Ano:</label>
-            <select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} style={{ padding: '0.5rem', border: '1px solid #e1e0d9', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}>
-              {years.map((year) => (
-                <option key={year} value={year}>{year}</option>
-              ))}
+            <select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} style={select}>
+              {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
-
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button onClick={() => setComparisonMode('current')} style={{ padding: '0.5rem 1rem', background: comparisonMode === 'current' ? '#533ab7' : 'transparent', color: comparisonMode === 'current' ? '#ffffff' : '#52514e', border: comparisonMode === 'current' ? 'none' : '1px solid #e1e0d9', borderRadius: '6px', fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}>
-              MoM
-            </button>
-            <button onClick={() => setComparisonMode('yoy')} style={{ padding: '0.5rem 1rem', background: comparisonMode === 'yoy' ? '#533ab7' : 'transparent', color: comparisonMode === 'yoy' ? '#ffffff' : '#52514e', border: comparisonMode === 'yoy' ? 'none' : '1px solid #e1e0d9', borderRadius: '6px', fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}>
-              YoY
-            </button>
-            <button onClick={() => setComparisonMode('ytd')} style={{ padding: '0.5rem 1rem', background: comparisonMode === 'ytd' ? '#533ab7' : 'transparent', color: comparisonMode === 'ytd' ? '#ffffff' : '#52514e', border: comparisonMode === 'ytd' ? 'none' : '1px solid #e1e0d9', borderRadius: '6px', fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}>
-              YTD
-            </button>
+            {Object.entries(MODES).map(([k, v]) => (
+              <button key={k} onClick={() => setMode(k)} style={btn(mode === k)}>{v.label}</button>
+            ))}
           </div>
-
-          {data && <button onClick={downloadCSV} style={{ padding: '0.5rem 1rem', border: '1px solid #b4b2a9', background: 'transparent', borderRadius: '6px', fontSize: '13px', cursor: 'pointer', color: '#52514e', marginLeft: 'auto' }}>↓ Exportar CSV</button>}
+          {data && (
+            <button onClick={downloadCSV} style={{ padding: '0.5rem 1rem', border: '1px solid #b4b2a9', background: 'transparent', borderRadius: '6px', fontSize: '13px', cursor: 'pointer', color: '#52514e', marginLeft: 'auto' }}>↓ Exportar CSV</button>
+          )}
         </div>
 
-        {/* Data Not Available Message */}
-        {!data && (
-          <div style={{ background: '#fef3e2', border: '1px solid #f0c959', borderRadius: '6px', padding: '1.5rem', marginBottom: '2rem', textAlign: 'center' }}>
-            <p style={{ fontSize: '14px', color: '#8b6f47', margin: 0 }}>📊 Dados não disponíveis para {monthNames[parseInt(selectedMonth) - 1]}/{selectedYear}</p>
-            <p style={{ fontSize: '12px', color: '#a88a52', margin: '0.5rem 0 0 0' }}>Selecione outro período ou aguarde a atualização dos dados.</p>
+        {loading && (
+          <div style={{ padding: '2rem', textAlign: 'center', color: '#52514e', fontSize: '14px' }}>Carregando dados do Analytics.xlsx…</div>
+        )}
+
+        {!loading && fetchError && (
+          <div style={{ background: '#fcebeb', border: '1px solid #e8a0a0', borderRadius: '6px', padding: '1.5rem', marginBottom: '2rem' }}>
+            <p style={{ fontSize: '14px', color: '#8b2f2f', margin: 0, fontWeight: '500' }}>Não foi possível carregar os dados</p>
+            <p style={{ fontSize: '12px', color: '#8b2f2f', margin: '0.5rem 0 0 0', fontFamily: 'monospace' }}>{fetchError}</p>
           </div>
         )}
 
-        {/* KPI Grid */}
-        {loading && <div style={{ padding: '2rem', textAlign: 'center' }}>Carregando dados...</div>}
+        {!loading && !fetchError && !data && (
+          <div style={{ background: '#fef3e2', border: '1px solid #f0c959', borderRadius: '6px', padding: '1.5rem', marginBottom: '2rem', textAlign: 'center' }}>
+            <p style={{ fontSize: '14px', color: '#8b6f47', margin: 0 }}>Sem dados para {MONTH_NAMES[parseInt(selectedMonth, 10) - 1]}/{selectedYear}</p>
+            <p style={{ fontSize: '12px', color: '#a88a52', margin: '0.5rem 0 0 0' }}>
+              {rangeLabel ? `Períodos disponíveis: ${rangeLabel}` : 'Selecione outro período.'}
+            </p>
+          </div>
+        )}
 
-{!loading && !data && (
-  <div style={{ background: '#fef3e2', border: '1px solid #f0c959', borderRadius: '6px', padding: '1.5rem', marginBottom: '2rem', textAlign: 'center' }}>
-    <p style={{ fontSize: '14px', color: '#8b6f47', margin: 0 }}>📊 Dados não disponíveis para {monthNames[parseInt(selectedMonth) - 1]}/{selectedYear}</p>
-  </div>
-)}
-
-{!loading && data && (
-  <div style={{ display: 'grid', ...
-
-            <MetricCard label="Venda Bruta" current={data.current.value} previous={data.previous.value} />
-            <MetricCard label="Ecommerce" current={data.current.ecommerce} previous={data.previous.ecommerce} />
-            <MetricCard label="% Ecom/Venda" current={data.current.ecomPercent} previous={data.previous.ecomPercent} isPercent={true} />
-            <MetricCard label="Venda FDS" current={data.current.fdsSales} previous={data.previous.fdsSales} />
-            <MetricCard label="% FDS/Venda" current={data.current.fdsPercent} previous={data.previous.fdsPercent} isPercent={true} />
-            <MetricCard label="Venda Dia a Dia" current={data.current.dailySales} previous={data.previous.dailySales} />
-            <MetricCard label="% Dia a Dia" current={data.current.dailyPercent} previous={data.previous.dailyPercent} isPercent={true} />
-
-            <div style={{ gridColumn: '1 / -1', borderBottom: '1px solid #e1e0d9', paddingTop: '1rem', paddingBottom: '1rem', marginTop: '0.5rem' }}>
-              <h2 style={{ fontSize: '14px', fontWeight: '500', color: '#0b0b0b', margin: 0 }}>▌ OPERACIONAL</h2>
-            </div>
-
-            <MetricCard label="Pedidos" current={data.current.orders} previous={data.previous.orders} isInteger={true} />
-            <MetricCard label="Ticket Médio" current={data.current.ticketAvg} previous={data.previous.ticketAvg} unit="currency" />
-            <MetricCard label="Pedidos/Dia" current={data.current.ordersPerDay} previous={data.previous.ordersPerDay} unit="number" />
-            <MetricCard label="Venda em kg" current={data.current.salesKg} previous={data.previous.salesKg} unit="kg" />
-            <MetricCard label="Média kg/pedido" current={data.current.avgKgPerOrder} previous={data.previous.avgKgPerOrder} unit="number" />
-
-            <div style={{ gridColumn: '1 / -1', borderBottom: '1px solid #e1e0d9', paddingTop: '1rem', paddingBottom: '1rem', marginTop: '0.5rem' }}>
-              <h2 style={{ fontSize: '14px', fontWeight: '500', color: '#0b0b0b', margin: 0 }}>▌ CAIXA</h2>
-            </div>
-
-            <MetricCard label="Entrada de Caixa" current={data.current.cashInflow} previous={data.previous.cashInflow} />
-            <MetricCard label="Saída de Caixa" current={data.current.cashOutflow} previous={data.previous.cashOutflow} />
-            <MetricCard label="Saldo Caixa" current={data.current.cashBalance} previous={data.previous.cashBalance} />
-
-            <div style={{ gridColumn: '1 / -1', borderBottom: '1px solid #e1e0d9', paddingTop: '1rem', paddingBottom: '1rem', marginTop: '0.5rem' }}>
-              <h2 style={{ fontSize: '14px', fontWeight: '500', color: '#0b0b0b', margin: 0 }}>▌ BALANÇO</h2>
-            </div>
-
-            <MetricCard label="Contas a Pagar" current={data.current.payableAccounts} previous={data.previous.payableAccounts} />
-            <MetricCard label="Contas a Receber" current={data.current.receivableAccounts} previous={data.previous.receivableAccounts} />
-            <MetricCard label="Banco + Cofre" current={data.current.bankBalance} previous={data.previous.bankBalance} />
-            <MetricCard label="Estoque Carnes" current={data.current.stockMeat} previous={data.previous.stockMeat} />
-            <MetricCard label="Estoque Outros" current={data.current.stockOther} previous={data.previous.stockOther} />
+        {!loading && data && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '12px', marginBottom: '2rem' }}>
+            {SECTIONS.map((section, si) => (
+              <SectionBlock key={section.title} first={si === 0} title={section.title}>
+                {section.metrics.map((m) => (
+                  <MetricCard
+                    key={m.key}
+                    label={m.label}
+                    unit={m.unit}
+                    current={data.current?.[m.key]}
+                    previous={data.previous ? data.previous[m.key] : null}
+                    prevLabel={MODES[mode].prevLabel}
+                  />
+                ))}
+              </SectionBlock>
+            ))}
           </div>
         )}
       </div>
@@ -258,38 +317,35 @@ async function fetchKPIData() {
   );
 }
 
-function MetricCard({ label, current, previous, isPercent, isInteger, unit = 'currency' }) {
-  const variation = ((current - previous) / previous) * 100;
-  const isPositive = variation >= 0;
+// Section header spanning the full grid width, followed by its cards
+function SectionBlock({ title, first, children }) {
+  return (
+    <>
+      <div style={{ gridColumn: '1 / -1', borderBottom: '1px solid #e1e0d9', paddingTop: first ? 0 : '1rem', paddingBottom: '1rem', marginTop: first ? 0 : '0.5rem' }}>
+        <h2 style={{ fontSize: '14px', fontWeight: '500', color: '#0b0b0b', margin: 0 }}>▌ {title}</h2>
+      </div>
+      {children}
+    </>
+  );
+}
 
-  let displayCurrent, displayPrevious;
-
-  if (isPercent) {
-    displayCurrent = (current * 100).toFixed(2) + '%';
-    displayPrevious = (previous * 100).toFixed(2) + '%';
-  } else if (isInteger) {
-    displayCurrent = current.toLocaleString('pt-BR');
-    displayPrevious = previous.toLocaleString('pt-BR');
-  } else if (unit === 'kg') {
-    displayCurrent = (current / 1000).toFixed(1) + ' kg';
-    displayPrevious = (previous / 1000).toFixed(1) + ' kg';
-  } else if (unit === 'number') {
-    displayCurrent = current.toFixed(2);
-    displayPrevious = previous.toFixed(2);
-  } else {
-    displayCurrent = 'R$ ' + (current / 1000).toFixed(0) + 'k';
-    displayPrevious = 'R$ ' + (previous / 1000).toFixed(0) + 'k';
-  }
+function MetricCard({ label, current, previous, unit, prevLabel }) {
+  const v = variationPct(current, previous);
+  const positive = v !== null && v >= 0;
 
   return (
     <div style={{ background: '#ffffff', border: '1px solid #e1e0d9', borderRadius: '6px', padding: '1rem' }}>
       <p style={{ fontSize: '12px', color: '#52514e', margin: '0 0 0.75rem 0' }}>{label}</p>
-      <p style={{ fontSize: '16px', fontWeight: '600', color: '#0b0b0b', margin: '0 0 0.5rem 0' }}>{displayCurrent}</p>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ fontSize: '11px', color: '#898781', margin: 0 }}>Ant: {displayPrevious}</p>
-        <span style={{ fontSize: '12px', fontWeight: '500', color: '#ffffff', background: isPositive ? '#008300' : '#d03b3b', padding: '2px 6px', borderRadius: '4px' }}>
-          {isPositive ? '↑' : '↓'} {Math.abs(variation).toFixed(1)}%
-        </span>
+      <p style={{ fontSize: '18px', fontWeight: '600', color: '#0b0b0b', margin: '0 0 0.5rem 0' }}>{fmt(current, unit)}</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}>
+        <p style={{ fontSize: '11px', color: '#898781', margin: 0 }}>{prevLabel}: {fmt(previous, unit)}</p>
+        {v === null ? (
+          <span style={{ fontSize: '12px', color: '#898781' }}>—</span>
+        ) : (
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#ffffff', background: positive ? '#008300' : '#d03b3b', padding: '2px 6px', borderRadius: '4px', whiteSpace: 'nowrap' }}>
+            {positive ? '↑' : '↓'} {Math.abs(v).toFixed(1)}%
+          </span>
+        )}
       </div>
     </div>
   );
