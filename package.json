@@ -2,22 +2,17 @@
   "name": "talho-dashboard",
   "version": "1.0.0",
   "description": "Talho Carnes KPI Dashboard",
+  "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "export": "next export"
-  }
+    "start": "next start"
+  },
   "dependencies": {
-  "next": "^14.0.0",
-  "react": "^18.0.0",
-  "react-dom": "^18.0.0",
-  "googleapis": "^120.0.0",
-  "xlsx": "^0.18.5"
-}
-  "devDependencies": {
-    "autoprefixer": "^10.4.14",
-    "postcss": "^8.4.31",
-    "tailwindcss": "^3.3.5"
+    "next": "^14.2.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "googleapis": "^144.0.0",
+    "xlsx": "^0.18.5"
   }
 }
