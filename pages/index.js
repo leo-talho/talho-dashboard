@@ -10,7 +10,24 @@ export default function Dashboard() {
   const [comparisonMode, setComparisonMode] = useState('current');
   const [selectedMonth, setSelectedMonth] = useState('07'); // Jul
   const [selectedYear, setSelectedYear] = useState('2026');
+  const [monthlyData, setMonthlyData] = useState({});
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    fetchKPIData();
+}, []);
+
+async function fetchKPIData() {
+  try {
+    const response = await fetch('/api/fetch-kpi-data');
+    const data = await response.json();
+    setMonthlyData(data);
+    setLoading(false);
+  } catch (error) {
+    console.error('Failed to load KPI data:', error);
+    setLoading(false);
+  }
+}
   const validUsers = {
     'leo@talho.com.br': 'talho2026',
     'mauricio@talho.com.br': 'talho2026',
@@ -37,61 +54,6 @@ export default function Dashboard() {
   const years = Array.from({ length: 7 }, (_, i) => 2022 + i); // 2022-2028
 
   // Data structure: monthlyData['2026-07'] = { current: {...}, previous: {...}, previousYear: {...}, ytd: {...}, ytdPreviousYear: {...} }
-  const monthlyData = {
-    '2026-07': {
-      current: {
-        value: 988126.63, ecommerce: 105240.00, ecomPercent: 0.1065, fdsSales: 575000.00, fdsPercent: 0.582,
-        dailySales: 413126.00, dailyPercent: 0.418, orders: 2923, ticketAvg: 338.05, ordersPerDay: 94.29,
-        salesKg: 7720.65, avgKgPerOrder: 2.64, cashInflow: 913888.39, cashOutflow: 913888.39, cashBalance: 0.00,
-        payableAccounts: 818313.27, receivableAccounts: 72477.85, bankBalance: 768100.32, stockMeat: 2303292.33, stockOther: 1048662.60,
-      },
-      previous: {
-        value: 1087621.94, ecommerce: 98500.00, ecomPercent: 0.0904, fdsSales: 650000.00, fdsPercent: 0.597,
-        dailySales: 437621.94, dailyPercent: 0.403, orders: 3097, ticketAvg: 351.19, ordersPerDay: 103.23,
-        salesKg: 8409.14, avgKgPerOrder: 2.72, cashInflow: 1103370.12, cashOutflow: 1103370.12, cashBalance: 0.00,
-        payableAccounts: 813977.97, receivableAccounts: 49773.37, bankBalance: 850000.00, stockMeat: 2200000.00, stockOther: 1000000.00,
-      },
-      previousYear: {
-        value: 798048.91, ecommerce: 45000.00, ecomPercent: 0.0564, fdsSales: 480000.00, fdsPercent: 0.601,
-        dailySales: 318048.91, dailyPercent: 0.399, orders: 2400, ticketAvg: 332.53, ordersPerDay: 77.42,
-        salesKg: 6800.00, avgKgPerOrder: 2.83, cashInflow: 790000.00, cashOutflow: 800000.00, cashBalance: -10000.00,
-        payableAccounts: 700000.00, receivableAccounts: 80000.00, bankBalance: 650000.00, stockMeat: 2100000.00, stockOther: 900000.00,
-      },
-      ytd: {
-        value: 6717703.99, ecommerce: 592709.82, ecomPercent: 0.088231, fdsSales: 3958186.28, fdsPercent: 0.589217,
-        dailySales: 2759517.71, dailyPercent: 0.410783, orders: 19392, ticketAvg: 2422.70, ordersPerDay: 643.59,
-        salesKg: 52818.07, avgKgPerOrder: 19.06, cashInflow: 6828941.24, cashOutflow: 7086436.99, cashBalance: -257495.75,
-        payableAccounts: 5412597.70, receivableAccounts: 557643.93, bankBalance: 768100.32, stockMeat: 2303292.33, stockOther: 1048662.60,
-      },
-      ytdPreviousYear: {
-        value: 5805210.83, ecommerce: 356978.97, ecomPercent: 0.061493, fdsSales: 3486463.55, fdsPercent: 0.600575,
-        dailySales: 2318747.28, dailyPercent: 0.399425, orders: 16622, ticketAvg: 2453.64, ordersPerDay: 552.27,
-        salesKg: 47388.95, avgKgPerOrder: 20.05, cashInflow: 5879982.07, cashOutflow: 5979764.60, cashBalance: -99782.53,
-        payableAccounts: 4364920.82, receivableAccounts: 666266.10, bankBalance: 1986545.06, stockMeat: 2057582.40, stockOther: 820470.22,
-      },
-    },
-    '2026-06': {
-      current: {
-        value: 1087621.94, ecommerce: 98500.00, ecomPercent: 0.0904, fdsSales: 650000.00, fdsPercent: 0.597,
-        dailySales: 437621.94, dailyPercent: 0.403, orders: 3097, ticketAvg: 351.19, ordersPerDay: 103.23,
-        salesKg: 8409.14, avgKgPerOrder: 2.72, cashInflow: 1103370.12, cashOutflow: 1103370.12, cashBalance: 0.00,
-        payableAccounts: 813977.97, receivableAccounts: 49773.37, bankBalance: 850000.00, stockMeat: 2200000.00, stockOther: 1000000.00,
-      },
-      previous: {
-        value: 1012277.69, ecommerce: 95000.00, ecomPercent: 0.0938, fdsSales: 600000.00, fdsPercent: 0.593,
-        dailySales: 412277.69, dailyPercent: 0.407, orders: 2864, ticketAvg: 353.45, ordersPerDay: 95.47,
-        salesKg: 7865.65, avgKgPerOrder: 2.75, cashInflow: 1050000.00, cashOutflow: 1050000.00, cashBalance: 0.00,
-        payableAccounts: 800000.00, receivableAccounts: 60000.00, bankBalance: 800000.00, stockMeat: 2150000.00, stockOther: 950000.00,
-      },
-      previousYear: {
-        value: 900000.00, ecommerce: 50000.00, ecomPercent: 0.0556, fdsSales: 500000.00, fdsPercent: 0.556,
-        dailySales: 400000.00, dailyPercent: 0.444, orders: 2500, ticketAvg: 360.00, ordersPerDay: 83.33,
-        salesKg: 7000.00, avgKgPerOrder: 2.80, cashInflow: 850000.00, cashOutflow: 850000.00, cashBalance: 0.00,
-        payableAccounts: 750000.00, receivableAccounts: 70000.00, bankBalance: 700000.00, stockMeat: 2050000.00, stockOther: 900000.00,
-      },
-    },
-    // Add more months here as data becomes available: '2026-08': {...}, '2026-09': {...}, etc.
-  };
 
   const caixaData = {
     '2026-07': {
@@ -243,11 +205,16 @@ export default function Dashboard() {
         )}
 
         {/* KPI Grid */}
-        {data && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', marginBottom: '2rem' }}>
-            <div style={{ gridColumn: '1 / -1', borderBottom: '1px solid #e1e0d9', paddingBottom: '1rem', marginBottom: '0.5rem' }}>
-              <h2 style={{ fontSize: '14px', fontWeight: '500', color: '#0b0b0b', margin: 0 }}>▌ RECEITA</h2>
-            </div>
+        {loading && <div style={{ padding: '2rem', textAlign: 'center' }}>Carregando dados...</div>}
+
+{!loading && !data && (
+  <div style={{ background: '#fef3e2', border: '1px solid #f0c959', borderRadius: '6px', padding: '1.5rem', marginBottom: '2rem', textAlign: 'center' }}>
+    <p style={{ fontSize: '14px', color: '#8b6f47', margin: 0 }}>📊 Dados não disponíveis para {monthNames[parseInt(selectedMonth) - 1]}/{selectedYear}</p>
+  </div>
+)}
+
+{!loading && data && (
+  <div style={{ display: 'grid', ...
 
             <MetricCard label="Venda Bruta" current={data.current.value} previous={data.previous.value} />
             <MetricCard label="Ecommerce" current={data.current.ecommerce} previous={data.previous.ecommerce} />
