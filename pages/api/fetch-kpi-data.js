@@ -177,10 +177,8 @@ export default async function handler(req, res) {
 
     // 3) parse workbook
     const workbook = XLSX.read(Buffer.from(fileResp.data), { type: 'buffer', cellDates: true });
-    const sheet = workbook.Sheets[SHEET_NAME];
-    if (!sheet) {
-      throw new Error(`Sheet "${SHEET_NAME}" not found. Sheets: ${workbook.SheetNames.join(', ')}`);
-    }
+    const sheetName = workbook.SheetNames.find((n) => n.trim() === SHEET_NAME);
+    const sheet = sheetName ? workbook.Sheets[sheetName] : null;
 
     const rawRows = XLSX.utils.sheet_to_json(sheet, { defval: null });
 
