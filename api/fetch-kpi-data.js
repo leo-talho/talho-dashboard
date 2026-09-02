@@ -4,8 +4,8 @@ import * as XLSX from 'xlsx';
 const FILE_ID = '1dJtFM2_qzgFMzOUZG2ShQb-tfJAKve4I';
 
 const monthMap = {
-  'jan': '01', 'fev': '02', 'mar': '03', 'abr': '04', 'mai': '05', 'jun': '06',
-  'jul': '07', 'ago': '08', 'set': '09', 'out': '10', 'nov': '11', 'dez': '12'
+  'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04', 'may': '05', 'jun': '06',
+  'jul': '07', 'aug': '08', 'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12'
 };
 
 export default async function handler(req, res) {
