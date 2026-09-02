@@ -45,7 +45,11 @@ function formatKPIData(dadosRows) {
     if (!mesStr) return;
 
     // Parse date format: "jan-24" → "2024-01"
-    const [monthStr, yearStr] = mesStr.toLowerCase().split('-');
+    const parts = mesStr.toLowerCase().split('-');
+    if (parts.length !== 2) return;
+    
+    const monthStr = parts[0];
+    const yearStr = parts[1];
     const month = monthMap[monthStr];
     const year = '20' + yearStr;
     const key = `${year}-${month}`;
@@ -59,15 +63,20 @@ function formatKPIData(dadosRows) {
     }
 
     // Map columns from "Dados" sheet
+    const vendaBruta = parseFloat(row['Venda Bruta'] || 0);
+    const ecommerce = parseFloat(row['Ecommerce'] || 0);
+    const vendaFDS = parseFloat(row['Vendas "FDS"'] || 0);
+    const pedidosMes = parseInt(row['Pedidos por Mês'] || 0);
+
     formatted[key].current = {
-      value: parseFloat(row['Venda Bruta'] || 0),
-      ecommerce: parseFloat(row['Ecommerce'] || 0),
-      ecomPercent: (parseFloat(row['Ecommerce'] || 0) / parseFloat(row['Venda Bruta'] || 1)),
-      fdsSales: parseFloat(row['Vendas "FDS"'] || 0),
-      fdsPercent: (parseFloat(row['Vendas "FDS"'] || 0) / parseFloat(row['Venda Bruta'] || 1)),
-      dailySales: (parseFloat(row['Venda Bruta'] || 0) - parseFloat(row['Vendas "FDS"'] || 0)),
-      dailyPercent: 1 - (parseFloat(row['Vendas "FDS"'] || 0) / parseFloat(row['Venda Bruta'] || 1)),
-      orders: parseInt(row['Pedidos por Mês'] || 0),
+      value: vendaBruta,
+      ecommerce: ecommerce,
+      ecomPercent: vendaBruta > 0 ? ecommerce / vendaBruta : 0,
+      fdsSales: vendaFDS,
+      fdsPercent: vendaBruta > 0 ? vendaFDS / vendaBruta : 0,
+      dailySales: vendaBruta - vendaFDS,
+      dailyPercent: vendaBruta > 0 ? (vendaBruta - vendaFDS) / vendaBruta : 0,
+      orders: pedidosMes,
       ticketAvg: parseFloat(row['Ticket Médio'] || 0),
       ordersPerDay: parseFloat(row['Pedidos por Dia'] || 0),
       salesKg: parseFloat(row['Venda em kg'] || 0),
@@ -80,38 +89,6 @@ function formatKPIData(dadosRows) {
       bankBalance: parseFloat(row['Banco + Cofre'] || 0),
       stockMeat: parseFloat(row['Estoque Carnes'] || 0),
       stockOther: parseFloat(row['Estoque Não Carnes'] || 0),
-    };
-  });
-
-  return formatted;
-}        ytd: {},
-        ytdPreviousYear: {},
-      };
-    }
-
-    // Map columns from Excel to data structure
-    // ADJUST THESE COLUMN NAMES to match your Analytics.xlsx columns
-    formatted[key].current = {
-      value: parseFloat(row['Venda Bruta'] || 0),
-      ecommerce: parseFloat(row['Ecommerce'] || 0),
-      ecomPercent: parseFloat(row['% Ecom'] || 0) / 100,
-      fdsSales: parseFloat(row['Venda FDS'] || 0),
-      fdsPercent: parseFloat(row['% FDS'] || 0) / 100,
-      dailySales: parseFloat(row['Venda Dia a Dia'] || 0),
-      dailyPercent: parseFloat(row['% Dia a Dia'] || 0) / 100,
-      orders: parseInt(row['Pedidos'] || 0),
-      ticketAvg: parseFloat(row['Ticket Médio'] || 0),
-      ordersPerDay: parseFloat(row['Pedidos/Dia'] || 0),
-      salesKg: parseFloat(row['Venda em kg'] || 0),
-      avgKgPerOrder: parseFloat(row['Média kg/pedido'] || 0),
-      cashInflow: parseFloat(row['Entrada de Caixa'] || 0),
-      cashOutflow: parseFloat(row['Saída de Caixa'] || 0),
-      cashBalance: parseFloat(row['Saldo Caixa'] || 0),
-      payableAccounts: parseFloat(row['Contas a Pagar'] || 0),
-      receivableAccounts: parseFloat(row['Contas a Receber'] || 0),
-      bankBalance: parseFloat(row['Banco + Cofre'] || 0),
-      stockMeat: parseFloat(row['Estoque Carnes'] || 0),
-      stockOther: parseFloat(row['Estoque Outros'] || 0),
     };
   });
 
