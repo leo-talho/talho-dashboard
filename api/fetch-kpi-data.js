@@ -1,38 +1,34 @@
 import { google } from 'googleapis';
 import * as XLSX from 'xlsx';
 
-const FILE_ID = '1dJtFM2_qzgFMzOUZG2ShQb-tfJAKve4I'; // Your Analytics.xlsx FILE_ID
+const FILE_ID = '1dJtFM2_qzgFMzOUZG2ShQb-tfJAKve4I';
+
+const monthMap = {
+  'jan': '01', 'fev': '02', 'mar': '03', 'abr': '04', 'mai': '05', 'jun': '06',
+  'jul': '07', 'ago': '08', 'set': '09', 'out': '10', 'nov': '11', 'dez': '12'
+};
 
 export default async function handler(req, res) {
   try {
-    // Parse service account credentials
     const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
     
-    // Create auth client
     const auth = new google.auth.JWT({
       email: credentials.client_email,
       key: credentials.private_key,
       scopes: ['https://www.googleapis.com/auth/drive.readonly'],
     });
 
-    // Initialize Drive API
     const drive = google.drive({ version: 'v3', auth });
 
-    // Download file from Google Drive
     const response = await drive.files.get(
       { fileId: FILE_ID, alt: 'media' },
       { responseType: 'arraybuffer' }
     );
 
-    // Parse Excel file
     const workbook = XLSX.read(response.data, { type: 'array' });
-    
-    // Extract sheets
-    const kpiSheet = XLSX.utils.sheet_to_json(workbook.Sheets["KPI's Dashboard"]);
-    const caixaSheet = XLSX.utils.sheet_to_json(workbook.Sheets["CAIXA"]);
+    const dadosSheet = XLSX.utils.sheet_to_json(workbook.Sheets["Dados"]);
 
-    // Format data into monthlyData structure
-    const monthlyData = formatKPIData(kpiSheet, caixaSheet);
+    const monthlyData = formatKPIData(dadosSheet);
 
     res.status(200).json(monthlyData);
   } catch (error) {
@@ -41,25 +37,54 @@ export default async function handler(req, res) {
   }
 }
 
-function formatKPIData(kpiRows, caixaRows) {
+function formatKPIData(dadosRows) {
   const formatted = {};
 
-  // Process KPI rows
-  kpiRows.forEach((row) => {
-    // Your Excel structure: assume column "Mês" has date like "07/2026"
-    // Adjust these column names to match your actual Excel
-    const monthStr = row['Mês'] || row['Período']; // Try both column names
-    if (!monthStr) return;
+  dadosRows.forEach((row) => {
+    const mesStr = row['Mês'];
+    if (!mesStr) return;
 
-    const [month, year] = monthStr.split('/');
-    const key = `${year}-${String(month).padStart(2, '0')}`;
+    // Parse date format: "jan-24" → "2024-01"
+    const [monthStr, yearStr] = mesStr.toLowerCase().split('-');
+    const month = monthMap[monthStr];
+    const year = '20' + yearStr;
+    const key = `${year}-${month}`;
 
     if (!formatted[key]) {
       formatted[key] = {
         current: {},
         previous: {},
         previousYear: {},
-        ytd: {},
+      };
+    }
+
+    // Map columns from "Dados" sheet
+    formatted[key].current = {
+      value: parseFloat(row['Venda Bruta'] || 0),
+      ecommerce: parseFloat(row['Ecommerce'] || 0),
+      ecomPercent: (parseFloat(row['Ecommerce'] || 0) / parseFloat(row['Venda Bruta'] || 1)),
+      fdsSales: parseFloat(row['Vendas "FDS"'] || 0),
+      fdsPercent: (parseFloat(row['Vendas "FDS"'] || 0) / parseFloat(row['Venda Bruta'] || 1)),
+      dailySales: (parseFloat(row['Venda Bruta'] || 0) - parseFloat(row['Vendas "FDS"'] || 0)),
+      dailyPercent: 1 - (parseFloat(row['Vendas "FDS"'] || 0) / parseFloat(row['Venda Bruta'] || 1)),
+      orders: parseInt(row['Pedidos por Mês'] || 0),
+      ticketAvg: parseFloat(row['Ticket Médio'] || 0),
+      ordersPerDay: parseFloat(row['Pedidos por Dia'] || 0),
+      salesKg: parseFloat(row['Venda em kg'] || 0),
+      avgKgPerOrder: parseFloat(row['Média kg/pedido'] || 0),
+      cashInflow: parseFloat(row['Entrada de Caixa'] || 0),
+      cashOutflow: parseFloat(row['Saída de Caixa'] || 0),
+      cashBalance: parseFloat(row['SALDO CAIXA'] || 0),
+      payableAccounts: parseFloat(row['Contas a Pagar'] || 0),
+      receivableAccounts: parseFloat(row['Contas a Receber'] || 0),
+      bankBalance: parseFloat(row['Banco + Cofre'] || 0),
+      stockMeat: parseFloat(row['Estoque Carnes'] || 0),
+      stockOther: parseFloat(row['Estoque Não Carnes'] || 0),
+    };
+  });
+
+  return formatted;
+}        ytd: {},
         ytdPreviousYear: {},
       };
     }
