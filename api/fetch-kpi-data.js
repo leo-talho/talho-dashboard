@@ -62,11 +62,14 @@ function formatKPIData(dadosRows) {
       };
     }
 
-    // Map columns from "Dados" sheet
+    // Map columns from "Dados" sheet - using EXACT column names
     const vendaBruta = parseFloat(row['Venda Bruta'] || 0);
-    const ecommerce = parseFloat(row['Ecommerce'] || 0);
+    const ecommerce = parseFloat(row['Ecomerce'] || 0); // Note: "Ecomerce" not "Ecommerce"
     const vendaFDS = parseFloat(row['Vendas "FDS"'] || 0);
-    const pedidosMes = parseInt(row['Pedidos por Mês'] || 0);
+    const vendaDiaADia = parseFloat(row['Vendas "Dia a Dia"'] || 0);
+    const pedidosMes = parseInt(row['Pedidos No Mês'] || 0);
+    const entradaCaixa = parseFloat(row['Entrada de Caixa'] || 0);
+    const saidaCaixa = parseFloat(row['Saída de Caixa'] || 0);
 
     formatted[key].current = {
       value: vendaBruta,
@@ -74,19 +77,19 @@ function formatKPIData(dadosRows) {
       ecomPercent: vendaBruta > 0 ? ecommerce / vendaBruta : 0,
       fdsSales: vendaFDS,
       fdsPercent: vendaBruta > 0 ? vendaFDS / vendaBruta : 0,
-      dailySales: vendaBruta - vendaFDS,
-      dailyPercent: vendaBruta > 0 ? (vendaBruta - vendaFDS) / vendaBruta : 0,
+      dailySales: vendaDiaADia,
+      dailyPercent: vendaBruta > 0 ? vendaDiaADia / vendaBruta : 0,
       orders: pedidosMes,
       ticketAvg: parseFloat(row['Ticket Médio'] || 0),
       ordersPerDay: parseFloat(row['Pedidos por Dia'] || 0),
-      salesKg: parseFloat(row['Venda em kg'] || 0),
-      avgKgPerOrder: parseFloat(row['Média kg/pedido'] || 0),
-      cashInflow: parseFloat(row['Entrada de Caixa'] || 0),
-      cashOutflow: parseFloat(row['Saída de Caixa'] || 0),
-      cashBalance: parseFloat(row['SALDO CAIXA'] || 0),
-      payableAccounts: parseFloat(row['Contas a Pagar'] || 0),
-      receivableAccounts: parseFloat(row['Contas a Receber'] || 0),
-      bankBalance: parseFloat(row['Banco + Cofre'] || 0),
+      salesKg: parseFloat(row['Venda em kg no mês'] || 0),
+      avgKgPerOrder: parseFloat(row['Média de kg por pedido'] || 0),
+      cashInflow: entradaCaixa,
+      cashOutflow: saidaCaixa,
+      cashBalance: entradaCaixa - saidaCaixa, // Calculate as Entrada - Saída
+      payableAccounts: parseFloat(row['Ctas à Pagar'] || 0),
+      receivableAccounts: parseFloat(row['Ctas à Receber'] || 0),
+      bankBalance: parseFloat(row['Sdo Itaú + Cofre Último dia do mês'] || 0),
       stockMeat: parseFloat(row['Estoque Carnes'] || 0),
       stockOther: parseFloat(row['Estoque Não Carnes'] || 0),
     };
